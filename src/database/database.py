@@ -6,6 +6,17 @@ clr.AddReference(r"D:\code\SQLConnector\SqlConnector\bin\Debug\SqlConnector.dll"
 from SqlConnector import SQLConnector
 
 
+class DatabaseProbe:
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "DatabaseProbe()"
+
+    def __str__(self):
+        return "DatabaseProbe: No Elements"
+
+
 @click.command()
 def get_databases():
     """ Prints the available databases within the SQLEXPRESS server instance. """
