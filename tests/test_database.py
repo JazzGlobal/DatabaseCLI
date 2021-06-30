@@ -1,7 +1,7 @@
 import pytest
 from src.database.database import DatabaseProbe
 
-@pytest.mark.skip
+@pytest.mark.skip("This is just an example test.")
 def test_database_placeholder():
     assert "" == ""
 
