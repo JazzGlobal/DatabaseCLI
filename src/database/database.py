@@ -1,8 +1,10 @@
 import clr
 import click
 import sys
+import os
+sys.path.append(os.getcwd() + r"\ref")
 
-clr.AddReference(r"D:\code\SQLConnector\SqlConnector\bin\Debug\SqlConnector.dll")
+clr.AddReference("SqlConnector")
 from SqlConnector import SQLConnector
 
 
