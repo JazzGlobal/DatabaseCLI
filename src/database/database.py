@@ -1,9 +1,11 @@
 # Python Imports
-import clr
-import click
-import sys
 import os
+import glob
+import sys
+import click
+import clr
 from icecream import ic
+from pathlib import Path
 
 sys.path.append(os.getcwd() + r"\ref")
 
@@ -80,3 +82,53 @@ def backup_databases(full_backup):
             ic(e)
         finally:
             database_probe.dispose()
+
+
+@click.command()
+@click.option("--recursive", "-r", default=False, help="")
+@click.argument("path")
+def restore_databases(path, recursive):
+    """ Restores the .BAK files from a given directory to the current SQLEXPRESS Instances """
+    path = Path(path)
+
+    # Debug
+    ic(str(path))
+    ic(recursive)
+    # End Debug
+
+    print("Checking for .BAK files ... ")
+
+    result_set = []
+    if recursive:
+        result_set = glob.glob(str(path) + "/**/*.BAK", recursive=True)
+    else:
+        result_set = glob.glob(str(path) + "/*.BAK", recursive=False)
+    # Debug
+    ic(result_set)
+    # End Debug
+
+    if len(result_set) > 1:
+        # Attempt to restore .BAK files.
+        for backup_file in result_set:
+            split_file_name = backup_file.split('\\')
+            name_index = len(split_file_name) - 1
+            backup_name = split_file_name[name_index].split('.')[0]
+            sql = f"RESTORE DATABASE [{backup_name}] FROM DISK='{backup_file}' WITH REPLACE"
+
+            # Debug
+            ic(backup_name)
+            ic(sql)
+            # Debug End
+
+            try:
+                database_probe = DatabaseProbe()
+                click.echo(f"Restoring Database {backup_name} from file {backup_file}")
+                database_probe.execute_query(sql)
+                click.echo("SUCCESS")
+            except Exception as e:
+                ic(e)
+                print(sql)
+            finally:
+                database_probe.dispose()
+    else:
+        print(f"No .BAK files were found in path: {path}")
