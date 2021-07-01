@@ -13,6 +13,7 @@ setup(
         'console_scripts': [
             'get_databases = src.database.database:get_databases',
             'backup = src.database.database:backup_databases',
+            'restore = src.database.database:restore_databases',
         ],
     },
 )
