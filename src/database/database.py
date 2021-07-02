@@ -13,6 +13,8 @@ sys.path.append(os.getcwd() + r"\ref")
 clr.AddReference("SqlConnector")
 from SqlConnector import SQLConnector
 
+ic.configureOutput(prefix="DEBUG: ", includeContext=True)
+
 
 class DatabaseProbe:
     def __init__(self):
@@ -66,19 +68,24 @@ def backup_databases(full_backup):
     if full_backup:
         sql = "SELECT * FROM SYS.DATABASES WHERE NAME NOT IN ('master','model','msdb','tempdb')"
     else:
-        sys.exit("Script exited because only total backups have been implemented. Re-use command with option "
-                 "--full-backup True")
+        exit_message = "Script exited because only total backups have been implemented. Re-use command with option " \
+                       "--full-backup True "
+        click.echo(exit_message)
+        sys.exit()
 
     result_set = database_probe.execute_query(sql)
+    ic(result_set)
     for database in result_set:
         try:
             sql = f"BACKUP DATABASE \"{database}\" TO DISK = \'C:\\CEMDAS\\BACKUP\\{database}.BAK\' WITH INIT"
-            print("Executing: ", sql)
+            ic(sql)
+            click.echo(f"Executing: {sql}")
             database_probe = DatabaseProbe()  # Create a new probe for each backup execution. We have to do this
             # because the queries get pushed to SQL SERVER for execution.
             database_probe.execute_query(sql)
-            print(f"Successfully Backed Up: {database}")
+            click.echo(f"Successfully Backed Up: {database}")
         except Exception as e:
+            click.echo(e)
             ic(e)
         finally:
             database_probe.dispose()
