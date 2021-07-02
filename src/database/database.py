@@ -54,7 +54,6 @@ def get_databases():
         return result_set
     except Exception as e:
         click.secho(e, bold=True, fg="red")
-        ic(e)
     finally:
         database_probe.dispose()
 
@@ -90,13 +89,11 @@ def backup_databases(full_backup, path):
     # Get the list of databases to backup.
     database_probe = DatabaseProbe()
     result_set = database_probe.execute_query(sql)
-    ic(result_set)
 
     # For each database, attempt to back it up. Log success / errors / failures accordingly.
     for database in result_set:
         try:
             sql = f"BACKUP DATABASE \"{database}\" TO DISK = \'{path}\\{database}.BAK\' WITH INIT"
-            ic(sql)
             click.echo(f"Executing: {sql}")
             database_probe = DatabaseProbe()  # Create a new probe for each backup execution. We have to do this
             # because the queries get pushed to SQL SERVER for execution. The connector object may not (very likely
@@ -105,7 +102,6 @@ def backup_databases(full_backup, path):
             click.secho(f"SUCCESS: {database} BACKUP COMPLETE", bold=True, fg="green")
         except Exception as e:
             click.secho(f"ERROR during {database} BACKUP attempt. {e}", bold=True, fg="red")
-            ic(e)
         finally:
             database_probe.dispose()
 
@@ -122,12 +118,6 @@ def restore_databases(path, recursive):
     """
 
     path = Path(path)
-
-    # Debug
-    ic(str(path))
-    ic(recursive)
-    # End Debug
-
     click.echo("Checking for .BAK files ... ")
 
     result_set = []
@@ -135,9 +125,6 @@ def restore_databases(path, recursive):
         result_set = glob.glob(str(path) + "/**/*.BAK", recursive=True)
     else:
         result_set = glob.glob(str(path) + "/*.BAK", recursive=False)
-    # Debug
-    ic(result_set)
-    # End Debug
 
     if len(result_set) > 1:
         # Attempt to restore .BAK files.
@@ -147,18 +134,12 @@ def restore_databases(path, recursive):
             backup_name = split_file_name[name_index].split('.')[0]
             sql = f"RESTORE DATABASE [{backup_name}] FROM DISK='{backup_file}' WITH REPLACE"
 
-            # Debug
-            ic(backup_name)
-            ic(sql)
-            # Debug End
-
             try:
                 database_probe = DatabaseProbe()
                 click.echo(f"Restoring Database {backup_name} from file {backup_file}")
                 database_probe.execute_query(sql)
                 click.secho(f"SUCCESS: {sql}", bold=True, fg="green")
             except Exception as e:
-                ic(e)
                 click.secho(f"FAILED: {sql}", bold=True, fg="red")
                 click.secho(e, fg="red")
             finally:
