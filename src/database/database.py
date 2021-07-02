@@ -59,8 +59,9 @@ def get_databases():
 
 
 @click.command()
-@click.option("--full-backup", default=False, help="Determines whether or not the command executes a backup over each "
-                                                   "database within the server instance.")
+@click.option("--full-backup", default=False, metavar='<bool>', help="Determines whether or not the command executes "
+                                                                     "a backup over each "
+                                                                     "database within the server instance.")
 def backup_databases(full_backup):
     """ Executes a T-SQL BACKUP command for the specified databases. """
     database_probe = DatabaseProbe()
@@ -83,19 +84,25 @@ def backup_databases(full_backup):
             database_probe = DatabaseProbe()  # Create a new probe for each backup execution. We have to do this
             # because the queries get pushed to SQL SERVER for execution.
             database_probe.execute_query(sql)
-            click.echo(f"Successfully Backed Up: {database}")
+            click.secho(f"SUCCESS: {database} BACKUP COMPLETE", bold=True, fg="green")
         except Exception as e:
-            click.echo(e)
+            click.secho(f"ERROR: {e} during {database} BACKUP attempt.", bold=True, fg="red")
             ic(e)
         finally:
             database_probe.dispose()
 
 
 @click.command()
-@click.option("--recursive", "-r", default=False, help="")
-@click.argument("path")
+@click.option("--recursive", "-r", default=False,
+              help="If set to True, will recursively search PATH for .BAK files.",
+              metavar='<bool>')
+@click.argument("path", metavar="<PATH>")
 def restore_databases(path, recursive):
-    """ Restores the .BAK files from a given directory to the current SQLEXPRESS Instances """
+    """ Restores the .BAK files from a given directory to the current SQLEXPRESS Instances
+
+    PATH is the path searched.
+    """
+
     path = Path(path)
 
     # Debug
@@ -103,7 +110,7 @@ def restore_databases(path, recursive):
     ic(recursive)
     # End Debug
 
-    print("Checking for .BAK files ... ")
+    click.echo("Checking for .BAK files ... ")
 
     result_set = []
     if recursive:
@@ -131,10 +138,11 @@ def restore_databases(path, recursive):
                 database_probe = DatabaseProbe()
                 click.echo(f"Restoring Database {backup_name} from file {backup_file}")
                 database_probe.execute_query(sql)
-                click.echo("SUCCESS")
+                click.secho(f"SUCCESS: {sql}", bold=True, fg="green")
             except Exception as e:
                 ic(e)
-                print(sql)
+                click.secho(f"FAILED: {sql}", bold=True, fg="red")
+                click.secho(e, fg="red")
             finally:
                 database_probe.dispose()
     else:
