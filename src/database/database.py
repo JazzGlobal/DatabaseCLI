@@ -63,9 +63,18 @@ def get_databases():
 @click.option("--full-backup", default=False, metavar='<bool>', help="Determines whether or not the command executes "
                                                                      "a backup over each "
                                                                      "database within the server instance.")
-def backup_databases(full_backup):
-    """ Executes a T-SQL BACKUP command for the specified databases. """
-    database_probe = DatabaseProbe()
+@click.argument("path", default=os.getcwd(), metavar='<PATH>')
+def backup_databases(full_backup, path):
+    """ Executes a T-SQL BACKUP command for the specified databases.
+
+    PATH is the location where the backup files will be placed.
+    """
+    if path == '.':
+        path = os.getcwd()
+    path = str(Path(path))
+
+    if not os.path.exists(path):
+        os.mkdir(path)
 
     if full_backup:
         sql = "SELECT * FROM SYS.DATABASES WHERE NAME NOT IN ('master','model','msdb','tempdb')"
@@ -75,11 +84,13 @@ def backup_databases(full_backup):
         click.echo(exit_message)
         sys.exit()
 
+    database_probe = DatabaseProbe()
     result_set = database_probe.execute_query(sql)
     ic(result_set)
+
     for database in result_set:
         try:
-            sql = f"BACKUP DATABASE \"{database}\" TO DISK = \'C:\\CEMDAS\\BACKUP\\{database}.BAK\' WITH INIT"
+            sql = f"BACKUP DATABASE \"{database}\" TO DISK = \'{path}\\{database}.BAK\' WITH INIT"
             ic(sql)
             click.echo(f"Executing: {sql}")
             database_probe = DatabaseProbe()  # Create a new probe for each backup execution. We have to do this
