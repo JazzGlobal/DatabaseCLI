@@ -53,6 +53,7 @@ def get_databases():
         click.echo(result_set)
         return result_set
     except Exception as e:
+        click.secho(e, bold=True, fg="red")
         ic(e)
     finally:
         database_probe.dispose()
@@ -86,7 +87,7 @@ def backup_databases(full_backup):
             database_probe.execute_query(sql)
             click.secho(f"SUCCESS: {database} BACKUP COMPLETE", bold=True, fg="green")
         except Exception as e:
-            click.secho(f"ERROR: {e} during {database} BACKUP attempt.", bold=True, fg="red")
+            click.secho(f"ERROR during {database} BACKUP attempt. {e}", bold=True, fg="red")
             ic(e)
         finally:
             database_probe.dispose()
