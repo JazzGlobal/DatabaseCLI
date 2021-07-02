@@ -69,6 +69,8 @@ def backup_databases(full_backup, path):
 
     PATH is the location where the backup files will be placed.
     """
+
+    # Look for given PATH. If it doesn't exist, create it.
     if path == '.':
         path = os.getcwd()
     path = str(Path(path))
@@ -76,6 +78,7 @@ def backup_databases(full_backup, path):
     if not os.path.exists(path):
         os.mkdir(path)
 
+    # Inspect FULL_BACKUP, generate SQL query accordingly.
     if full_backup:
         sql = "SELECT * FROM SYS.DATABASES WHERE NAME NOT IN ('master','model','msdb','tempdb')"
     else:
@@ -84,17 +87,20 @@ def backup_databases(full_backup, path):
         click.echo(exit_message)
         sys.exit()
 
+    # Get the list of databases to backup.
     database_probe = DatabaseProbe()
     result_set = database_probe.execute_query(sql)
     ic(result_set)
 
+    # For each database, attempt to back it up. Log success / errors / failures accordingly.
     for database in result_set:
         try:
             sql = f"BACKUP DATABASE \"{database}\" TO DISK = \'{path}\\{database}.BAK\' WITH INIT"
             ic(sql)
             click.echo(f"Executing: {sql}")
             database_probe = DatabaseProbe()  # Create a new probe for each backup execution. We have to do this
-            # because the queries get pushed to SQL SERVER for execution.
+            # because the queries get pushed to SQL SERVER for execution. The connector object may not (very likely
+            # isn't) closed before the next query is pushed.
             database_probe.execute_query(sql)
             click.secho(f"SUCCESS: {database} BACKUP COMPLETE", bold=True, fg="green")
         except Exception as e:
